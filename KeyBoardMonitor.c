@@ -29,6 +29,8 @@ NTSTATUS AttchAllDevice(PDRIVER_OBJECT Driver)
 		{
 			KdPrint(("Attch Error\r\n"));
 			IoDeleteDevice(FlteDev);
+			Me->FiltDev = NULL;
+			continue;
 		}
 		FlteDev->Flags|=(DO_BUFFERED_IO | DO_DIRECT_IO | DO_POWER_PAGABLE);
 	} while (Device);
@@ -69,12 +71,18 @@ VOID KeyBoardUnLoad(PDRIVER_OBJECT DriverObject)
 {
 	PDEVICE_OBJECT Device = DriverObject->DeviceObject;
 	PMEXT Me = NULL;
-	do {
+	while(Device)
+	{
 		Me = (PMEXT)Device->DeviceExtension;
-		IoDetachDevice(Me->AttchDev);
-		IoDeleteDevice(Me->FiltDev);
+		if (Me->FiltDev != NULL)
+		{
+			IoDetachDevice(Me->AttchDev);
+			IoDeleteDevice(Me->FiltDev);
+			Me->FiltDev = NULL;
+			Me->AttchDev = NULL;
+		}
 		Device = Device->NextDevice;
-	} while (Device);
+	};
 	return;
 }
 
