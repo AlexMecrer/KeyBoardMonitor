@@ -23,7 +23,7 @@ NTSTATUS AttchAllDevice(PDRIVER_OBJECT Driver)
 		RtlZeroMemory(Me,sizeof(MYEXT));
 		Me->FiltDev = FlteDev;
 		Me->OrgnDev = Device;
-		Me->AttchDev = IoAttachDeviceToDeviceStack(Device,FlteDev);
+		Me->AttchDev = IoAttachDeviceToDeviceStack(FlteDev,Device);
 		Device = Device->NextDevice;
 		if (Me->AttchDev == NULL)
 		{
