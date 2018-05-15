@@ -1,3 +1,6 @@
+#pragma once
+
+#include<wdm.h>
 #include<ntddkbd.h>
 
 
