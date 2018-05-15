@@ -24,6 +24,7 @@ NTSTATUS AttchAllDevice(PDRIVER_OBJECT Driver)
 		Me->FiltDev = FlteDev;
 		Me->OrgnDev = Device;
 		Me->AttchDev = IoAttachDeviceToDeviceStack(FlteDev,Device);
+		FlteDev->StackSize = Device->StackSize + 1;
 		Device = Device->NextDevice;
 		if (Me->AttchDev == NULL)
 		{
@@ -48,21 +49,16 @@ NTSTATUS KeyBoardDispathRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
 	NTSTATUS status;
 	PMEXT Me = (PMEXT)DeviceObject->DeviceExtension;
-	//KEVENT event;
+	KEVENT event;
 	PKEYBOARD_INPUT_DATA Data;
-	//KeInitializeEvent(&event,NotificationEvent,FALSE);
-	//IoSetCompletionRoutine(Irp,IoCompletionRoutine,&event,TRUE,TRUE,TRUE);
-	IoSkipCurrentIrpStackLocation(Irp);
+	KeInitializeEvent(&event,NotificationEvent,FALSE);
+	IoSetCompletionRoutine(Irp,IoCompletionRoutine,&event,TRUE,FALSE,FALSE);
+	IoCopyCurrentIrpStackLocationToNext(Irp);
 	status=IoCallDriver(Me->AttchDev,Irp);
-	/*if (status == STATUS_PENDING)
+	if (status == STATUS_PENDING)
 	{
 		KeWaitForSingleObject(&event,Executive,KernelMode,FALSE,NULL);
 		status = Irp->IoStatus.Status;
-	}*/
-	Data = Irp->AssociatedIrp.SystemBuffer;
-	if (Data->MakeCode != 0)
-	{
-		KdPrint(("%x\r\n", Data->MakeCode));
 	}
 	return status;
 }
@@ -86,12 +82,22 @@ VOID KeyBoardUnLoad(PDRIVER_OBJECT DriverObject)
 	return;
 }
 
-/*NTSTATUS IoCompletionRoutine(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context)
+NTSTATUS IoCompletionRoutine(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context)
 {
+	PKEYBOARD_INPUT_DATA Data = Irp->AssociatedIrp.SystemBuffer;
+	PIO_STACK_LOCATION spirp = IoGetCurrentIrpStackLocation(Irp);
+	ULONG DataNum = (spirp->Parameters.Read.Length)/sizeof(KEYBOARD_INPUT_DATA);
+	for (INT i = 0; i < DataNum; i++)
+	{
+		if (Data[i].MakeCode != 0)
+		{
+			KdPrint(("%x\r\n",Data[i].MakeCode));
+		}
+	}
 	if (Irp->PendingReturned == TRUE)
 	{
 		KeSetEvent((PKEVENT)Context,IO_NO_INCREMENT,FALSE);
 		IoMarkIrpPending(Irp);
 	}
 	return STATUS_SUCCESS;
-}*/
+}
