@@ -48,7 +48,7 @@ NTSTATUS KeyBoardDispathRead(
 VOID KeyBoardUnLoad(PDRIVER_OBJECT DriverObject);
 
 
-NTSTATUS IoCompletionRoutine(
+NTSTATUS MyIoCompletionRoutine(
 	PDEVICE_OBJECT DeviceObject,
 	PIRP Irp,
 	PVOID Context
